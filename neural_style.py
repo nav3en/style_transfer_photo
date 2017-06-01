@@ -943,7 +943,7 @@ def render_single_image():
         print('\n---- RENDERING SINGLE IMAGE ----\n')
         init_img = get_init_image(args.init_img_type, content_img, style_imgs)
         tick = time.time()
-        stylize(content_img, style_imgs, init_img)
+        stylize(content_img, style_imgs, init_img, frame=None, laplacian_mat=args.laplacian_dir)
         tock = time.time()
         print('Single image elapsed time: {}'.format(tock - tick))
 

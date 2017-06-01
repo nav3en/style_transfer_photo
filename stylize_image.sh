@@ -34,7 +34,7 @@ style_image="$2"
 style_dir=$(dirname "$style_image" )
 style_filename=$(basename "$style_image")
 
-python3 Deep_Laplacian.py --video_frames_input_dir ./image/tubigen_low.jpg --laplacian_dir './video_input/laplacian'
+python3 Deep_Laplacian.py --video_frames_input_dir ./image_input/tubingen.jpg --laplacian_dir './video_input/laplacian'
 
 
 echo "Rendering stylized image. This may take a while..."
@@ -44,5 +44,5 @@ python neural_style.py \
 --style_imgs "${style_filename}" \
 --style_imgs_dir "${style_dir}" \
 --device "${device}" \
---laplacian_dir './video_input/laplacian/tubigen.lap' \
+--laplacian_dir './video_input/laplacian/tubingen.npz' \
 --verbose;
