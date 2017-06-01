@@ -34,43 +34,7 @@ style_image="$2"
 style_dir=$(dirname "$style_image" )
 style_filename=$(basename "$style_image")
 
-set -e
-# Get a carriage return into `cr`
-cr=`echo $'\n.'`
-cr=${cr%.}
-
-if [ "$#" -le 1 ]; then
-   echo "Usage: bash stylize_image.sh <path_to_content_image> <path_to_style_image>"
-   exit 1
-fi
-
-echo ""
-read -p "Did you install the required dependencies? [y/n] $cr > " dependencies
-
-if [ "$dependencies" != "y" ]; then
-  echo "Error: Requires dependencies: tensorflow, opencv2 (python), scipy"
-  exit 1;
-fi
-
-echo ""
-read -p "Do you have a CUDA enabled GPU? [y/n] $cr > " cuda
-
-if [ "$cuda" != "y" ]; then
-  device='/cpu:0'
-else
-  device='/gpu:0'
-fi
-
-# Parse arguments
-content_image="$1"
-content_dir=$(dirname "$content_image")
-content_filename=$(basename "$content_image")
-
-style_image="$2"
-style_dir=$(dirname "$style_image" )
-style_filename=$(basename "$style_image")
-
-python3 Deep_Laplacian.py --video_frames_input_dir ./image/tenor --laplacian_dir './video_input/laplacian'
+python3 Deep_Laplacian.py --video_frames_input_dir ./image/tubigen_low.jpg --laplacian_dir './video_input/laplacian'
 
 
 echo "Rendering stylized image. This may take a while..."
@@ -80,5 +44,5 @@ python neural_style.py \
 --style_imgs "${style_filename}" \
 --style_imgs_dir "${style_dir}" \
 --device "${device}" \
---laplacian_dir './video_input/laplacian/' \
+--laplacian_dir './video_input/laplacian/tubigen.lap' \
 --verbose;
