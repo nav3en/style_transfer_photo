@@ -72,6 +72,9 @@ cd ./video_input
 bash make-opt-flow.sh ${content_filename}/frame_%04d.jpg ${content_filename}
 cd ..
 
+# Changing dir to tmp
+temp_dir="./video_input/tmp/${content_filename}"
+
 #echo "Rendering stylized video frames [CPU & GPU]. This will take a while..."
 python neural_style.py --video \
 --video_input_dir "${temp_dir}" \
@@ -84,7 +87,7 @@ python neural_style.py --video \
 
 # Create video from output images.
 echo "Converting image sequence to video.  This should be quick..."
-$FFMPEG -v quiet -i ./video_output/frame_%04d.ppm ./video_output/${content_filename}-stylized.$extension
+$FFMPEG -v quiet -i ./video_output/frame_%04d.jpg ./video_output/${content_filename}-stylized.$extension
 
 # Clean up garbage
 if [ -d "${temp_dir}" ]; then
