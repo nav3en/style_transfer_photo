@@ -73,7 +73,7 @@ bash make-opt-flow.sh ${content_filename}/frame_%04d.ppm ${content_filename}
 cd ..
 
 #echo "Rendering stylized video frames [CPU & GPU]. This will take a while..."
-#python neural_style.py --video \
+python neural_style.py --video \
 --video_input_dir "${temp_dir}" \
 --style_imgs_dir "${style_dir}" \
 --style_imgs "${style_filename}" \
