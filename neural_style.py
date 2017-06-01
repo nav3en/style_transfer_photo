@@ -185,7 +185,7 @@ def parse_args():
                         help='Relative or absolute directory path to output frames.')
 
     parser.add_argument('--content_frame_frmt', type=str,
-                        default='frame_{}.ppm',
+                        default='frame_{}.jpg',
                         help='Filename format of the input content frames.')
 
     parser.add_argument('--backward_optical_flow_frmt', type=str,

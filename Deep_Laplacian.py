@@ -87,28 +87,50 @@ class DeepLaplacian(object):
     def run(self,video_frames_input_dir,laplacian_dir,is_video=False):
 
 
-        images = list()
-        laplacians = list()
+        images = dict()
+        laplacians = dict()
+        image_names = dict()
         # build list of content images from the frames of the video
+        index = 0
         if is_video:
+
             dir_path = video_frames_input_dir
             for file in os.listdir(dir_path):
                 if file.endswith(".jpg"):
-                    images.append(os.path.join(dir_path, file))
-                    laplacians.append(os.path.join(laplacian_dir, file.replace(".jpg",".lap")))
+
+                    image_names[index] = file
+                    images[index] = os.path.join(dir_path, file)
+                    laplacians[index] = os.path.join(laplacian_dir, file.replace(".jpg","_lap"))
+                    index +=1
         else:
             print(laplacian_dir)
-            images.append(video_frames_input_dir)
-            laplacians.append(laplacian_dir)
+            images[index] = video_frames_input_dir
+            laplacians[index] = laplacian_dir
+            image_names[index] = video_frames_input_dir[video_frames_input_dir.rfind("/")+1:]
 
         num_images = len(images)
+
+        if is_video:
+            tmp_content_path = os.path.join(video_frames_input_dir, "tmp")
+        else:
+            tmp_path = video_frames_input_dir[:video_frames_input_dir.rfind("/")]
+            tmp_content_path = os.path.join(tmp_path, "tmp")
+
+        print("Temp path" + tmp_content_path)
+        if not os.path.exists(tmp_content_path):
+            print("Temp path doesn't exist creating")
+            os.makedirs(tmp_content_path)
+
         for i in range(num_images):
             content_image = images[i]
             laplacian = laplacians[i]
+            image_name = image_names[i]
             img = spi.imread(content_image, mode="RGB")
             resized_img = self.reshape_img(img)
             content_h, content_w, _ = resized_img.shape
-            tmp_content_name = content_image.replace(".jpg", "200.jpg")
+
+            tmp_content_name = image_name.replace(".jpg", "_200.jpg")
+            tmp_content_name = os.path.join(tmp_content_path,tmp_content_name)
             spm.imsave(tmp_content_name, resized_img)
 
             print("Calculating matting laplacian for " + str(content_image) + " as " + laplacian + "...")
