@@ -74,19 +74,19 @@ cd ..
 
 #echo "Rendering stylized video frames [CPU & GPU]. This will take a while..."
 #python neural_style.py --video \
-#--video_input_dir "${temp_dir}" \
-#--style_imgs_dir "${style_dir}" \
-#--style_imgs "${style_filename}" \
-#--end_frame "${num_frames}" \
-#--max_size "${max_size}" \
-#--laplacian_dir './video_input/laplacian' \
-#--verbose;
+--video_input_dir "${temp_dir}" \
+--style_imgs_dir "${style_dir}" \
+--style_imgs "${style_filename}" \
+--end_frame "${num_frames}" \
+--max_size "${max_size}" \
+--laplacian_dir './video_input/laplacian' \
+--verbose;
 
 # Create video from output images.
-#echo "Converting image sequence to video.  This should be quick..."
-#$FFMPEG -v quiet -i ./video_output/frame_%04d.ppm ./video_output/${content_filename}-stylized.$extension
+echo "Converting image sequence to video.  This should be quick..."
+$FFMPEG -v quiet -i ./video_output/frame_%04d.ppm ./video_output/${content_filename}-stylized.$extension
 
 # Clean up garbage
-#if [ -d "${temp_dir}" ]; then
-#  rm -rf "${temp_dir}"
-#fi
+if [ -d "${temp_dir}" ]; then
+  rm -rf "${temp_dir}"
+fi
