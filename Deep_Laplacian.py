@@ -96,8 +96,10 @@ class DeepLaplacian(object):
                 if file.endswith(".jpg"):
                     images.append(os.path.join(dir_path, file))
                     laplacians.append(os.path.join(laplacian_dir, file.replace(".jpg",".lap")))
-        images.append(video_frames_input_dir)
-        laplacians.append(laplacian_dir)
+        else:
+            print(laplacian_dir)
+            images.append(video_frames_input_dir)
+            laplacians.append(laplacian_dir)
 
         num_images = len(images)
         for i in range(num_images):
