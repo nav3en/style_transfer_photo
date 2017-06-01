@@ -65,7 +65,7 @@ else
 fi
 num_frames=$(find "$temp_dir" -iname "*.jpg" | wc -l)
 
-python3 Deep_Laplacian.py --video_frames_input_dir ./video_input/tenor --laplacian_dir './video_input/laplacian'
+python3 Deep_Laplacian.py --video_frames_input_dir ./video_input/tenor --laplacian_dir './video_input/laplacian' --video
 
 echo "Computing optical flow [CPU]. This will take a while..."
 cd ./video_input
@@ -79,6 +79,7 @@ cd ..
 #--style_imgs "${style_filename}" \
 #--end_frame "${num_frames}" \
 #--max_size "${max_size}" \
+#--laplacian_dir './video_input/laplacian' \
 #--verbose;
 
 # Create video from output images.

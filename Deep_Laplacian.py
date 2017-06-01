@@ -84,20 +84,20 @@ class DeepLaplacian(object):
         return csr_matrix((  loader['data'], loader['indices'], loader['indptr']),
                              shape = loader['shape'])
 
-    def run(self,video_frames_input_dir,laplacian_dir):
+    def run(self,video_frames_input_dir,laplacian_dir,is_video=False):
 
-        if not os.path.exists("./tmp/deep_photo/"):
-            os.makedirs("./tmp/deep_photo/")
+
         images = list()
         laplacians = list()
         # build list of content images from the frames of the video
-
-        dir_path = video_frames_input_dir
-        for file in os.listdir(dir_path):
-            if file.endswith(".jpg"):
-                images.append(os.path.join(dir_path, file))
-                laplacians.append(os.path.join(laplacian_dir, file.replace(".jpg",".lap")))
-
+        if is_video:
+            dir_path = video_frames_input_dir
+            for file in os.listdir(dir_path):
+                if file.endswith(".jpg"):
+                    images.append(os.path.join(dir_path, file))
+                    laplacians.append(os.path.join(laplacian_dir, file.replace(".jpg",".lap")))
+        images.append(video_frames_input_dir)
+        laplacians.append(laplacian_dir)
 
         num_images = len(images)
         for i in range(num_images):
@@ -120,16 +120,17 @@ class DeepLaplacian(object):
         parser = argparse.ArgumentParser()
         parser.add_argument('--video_frames_input_dir', type=str,
                             default='./video_input/tenor',
-                            help='Relative or absolute directory path to input frames.')
+                            help='Relative or absolute directory path to input frames. In case of single image complete path to image')
         parser.add_argument('--laplacian_dir', type=str,
                             default='./video_input/laplacian',
-                            help='Relative or absolute directory path to Laplacian directory.')
+                            help='Relative or absolute directory path to Laplacian directory.In case of single image complete path to laplacian')
+        parser.add_argument('--video', action='store_true',
+                            help='Boolean flag indicating if the user is generating laplacian for a video.')
         args = parser.parse_args()
         video_frames_input_dir  = args.video_frames_input_dir
         laplacian_dir = args.laplacian_dir
-        print(video_frames_input_dir)
-        print(laplacian_dir)
-
-        self.run(video_frames_input_dir,laplacian_dir)
+        is_video = args.video
+        print(is_video)
+        self.run(video_frames_input_dir,laplacian_dir,is_video)
 
 DeepLaplacian()
