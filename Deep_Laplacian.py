@@ -129,8 +129,8 @@ class DeepLaplacian(object):
             resized_img = self.reshape_img(img)
             content_h, content_w, _ = resized_img.shape
 
-            tmp_content_name = image_name.replace(".jpg", "_200.jpg")
-            tmp_content_name = os.path.join(tmp_content_path,tmp_content_name)
+            #tmp_content_name = image_name.replace(".jpg", "_200.jpg")
+            tmp_content_name = os.path.join(tmp_content_path,image_name)
             spm.imsave(tmp_content_name, resized_img)
 
             print("Calculating matting laplacian for " + str(content_image) + " as " + laplacian + "...")

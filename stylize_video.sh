@@ -81,6 +81,7 @@ python neural_style.py --video \
 --style_imgs_dir "${style_dir}" \
 --style_imgs "${style_filename}" \
 --end_frame "${num_frames}" \
+--content_frame_frmt "tmp/frame_{}.jpg" \
 --max_size "${max_size}" \
 --laplacian_dir './video_input/laplacian' \
 --verbose;

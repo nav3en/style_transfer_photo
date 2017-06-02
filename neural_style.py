@@ -50,7 +50,7 @@ def parse_args():
                         help='Image used to initialize the network. (default: %(default)s)')
 
     parser.add_argument('--max_size', type=int,
-                        default=512,
+                        default=200,
                         help='Maximum width or height of the input images. (default: %(default)s)')
 
     parser.add_argument('--content_weight', type=float,
@@ -494,7 +494,12 @@ def sum_shortterm_temporal_losses(sess, net, frame, input_img):
     x = sess.run(net['input'].assign(input_img))
     prev_frame = frame - 1
     w = get_prev_warped_frame(frame)
+    print("W Shape")
+    print(w.shape)
+    w = np.resize(w, (1, 110, 200, 3))
+    print(w.shape)
     c = get_content_weights(frame, prev_frame)
+    print(c.shape)
     loss = temporal_loss(x, w, c)
     return loss
 
@@ -560,7 +565,7 @@ def read_flow_file(path):
     with open(path, 'rb') as f:
         # 4 bytes header
         header = struct.unpack('4s', f.read(4))[0]
-        # 4 bytes width, height    
+        # 4 bytes width, height
         w = struct.unpack('i', f.read(4))[0]
         h = struct.unpack('i', f.read(4))[0]
         flow = np.ndarray((2, h, w), dtype=np.float32)
@@ -627,7 +632,8 @@ def convert_sparse_matrix_to_sparse_tensor(X):
 
 
 def stylize(content_img, style_imgs, init_img, frame=None, laplacian_mat=None):
-    with tf.device(args.device), tf.Session() as sess:
+    with tf.device(args.device), tf.Session(config=tf.ConfigProto(allow_soft_placement=True)) as sess:
+
         # setup network
         net = build_model(content_img)
 
@@ -650,15 +656,20 @@ def stylize(content_img, style_imgs, init_img, frame=None, laplacian_mat=None):
         print("shape of csr " + str(CSR.shape))
         CSR_tensor = convert_sparse_matrix_to_sparse_tensor(CSR)
         channels = init_img.shape[3]
-        N = init_img.shape[1] * init_img.shape[2]
-        V_O = tf.reshape(init_img, shape=(N, channels))
+
+        init_img_resized = tf.image.resize_images(init_img, size=[110, 200])
+        N = 110 * 200
+        V_O = tf.reshape(init_img_resized, shape=(N, channels))
         print("V O shape " + str(V_O[:, 0].shape))
         L_photorealism_reg = 0
         for c in range(channels):
             V_O_reshaped = tf.reshape(V_O[:, c], shape=(-1, 1))
-            L_photorealism_reg += tf.matmul(
-                tf.matmul(tf.transpose(V_O_reshaped), tf.cast(tf.sparse_tensor_to_dense(CSR_tensor), tf.float32)),
-                V_O_reshaped)
+            # L_photorealism_reg += tf.matmul(
+            #    tf.matmul(tf.transpose(V_O_reshaped), tf.cast(tf.sparse_tensor_to_dense(CSR_tensor), tf.float32)),
+            #    V_O_reshaped)
+            L_photorealism_reg += tf.matmul(tf.transpose(V_O_reshaped),
+                                            tf.sparse_tensor_dense_matmul(tf.cast(CSR_tensor, tf.float32),
+                                                                          V_O_reshaped))
 
         # loss weights
         alpha = args.content_weight
@@ -678,16 +689,17 @@ def stylize(content_img, style_imgs, init_img, frame=None, laplacian_mat=None):
         # video temporal loss
         if args.video and frame > 1:
             gamma = args.temporal_weight
-            L_temporal = sum_shortterm_temporal_losses(sess, net, frame, init_img)
+            print("Temporal Loss Frame")
+            L_temporal = sum_shortterm_temporal_losses(sess, net, frame, init_img_resized)
             L_total += gamma * L_temporal
 
         # optimization algorithm
         optimizer = get_optimizer(L_total)
 
         if args.optimizer == 'adam':
-            minimize_with_adam(sess, net, optimizer, init_img, L_total)
+            minimize_with_adam(sess, net, optimizer, init_img_resized, L_total)
         elif args.optimizer == 'lbfgs':
-            minimize_with_lbfgs(sess, net, optimizer, init_img)
+            minimize_with_lbfgs(sess, net, optimizer, init_img_resized)
 
         output_img = sess.run(net['input'])
         print(output_img.shape)
@@ -698,7 +710,7 @@ def stylize(content_img, style_imgs, init_img, frame=None, laplacian_mat=None):
         if args.video:
             write_video_output(frame, output_img)
         else:
-            write_image_output(output_img, content_img, style_imgs, init_img)
+            write_image_output(output_img, content_img, style_imgs, init_img_resized)
 
 
 def minimize_with_lbfgs(sess, net, optimizer, init_img):
