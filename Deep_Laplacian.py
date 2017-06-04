@@ -8,11 +8,12 @@ import numpy as np
 import glob
 import argparse
 
-class DeepLaplacian(object):
 
-    def getlaplacian1(self,i_arr: np.ndarray, consts: np.ndarray, epsilon: float = 0.0000001, win_size: int = 1):
+class DeepLaplacian(object):
+    def getlaplacian1(self, i_arr: np.ndarray, consts: np.ndarray, epsilon: float = 0.0000001, win_size: int = 1):
         neb_size = (win_size * 2 + 1) ** 2
         h, w, c = i_arr.shape
+
         img_size = w * h
         consts = spi.morphology.grey_erosion(consts, footprint=np.ones(shape=(win_size * 2 + 1, win_size * 2 + 1)))
 
@@ -57,12 +58,12 @@ class DeepLaplacian(object):
 
         return a_sparse
 
-    def im2double(self,im):
+    def im2double(self, im):
         min_val = np.min(im.ravel())
         max_val = np.max(im.ravel())
         return (im.astype('float') - min_val) / (max_val - min_val)
 
-    def reshape_img(self,in_img, l=200):
+    def reshape_img(self, in_img, l=200):
         in_h, in_w, _ = in_img.shape
         if in_h > in_w:
             h2 = l
@@ -73,19 +74,18 @@ class DeepLaplacian(object):
 
         return spm.imresize(in_img, (h2, w2))
 
-    def save_sparse_csr(self,filename,array):
+    def save_sparse_csr(self, filename, array):
         if not os.path.exists(os.path.dirname(filename)):
             os.makedirs(os.path.dirname(filename))
-        np.savez(filename,data = array.data ,indices=array.indices,
-                 indptr =array.indptr, shape=array.shape )
+        np.savez(filename, data=array.data, indices=array.indices,
+                 indptr=array.indptr, shape=array.shape)
 
-    def load_sparse_csr(self,filename):
+    def load_sparse_csr(self, filename):
         loader = np.load(filename)
-        return csr_matrix((  loader['data'], loader['indices'], loader['indptr']),
-                             shape = loader['shape'])
+        return csr_matrix((loader['data'], loader['indices'], loader['indptr']),
+                          shape=loader['shape'])
 
-    def run(self,video_frames_input_dir,laplacian_dir,is_video=False):
-
+    def run(self, video_frames_input_dir, laplacian_dir, is_video=False):
 
         images = dict()
         laplacians = dict()
@@ -97,16 +97,15 @@ class DeepLaplacian(object):
             dir_path = video_frames_input_dir
             for file in os.listdir(dir_path):
                 if file.endswith(".jpg"):
-
                     image_names[index] = file
                     images[index] = os.path.join(dir_path, file)
-                    laplacians[index] = os.path.join(laplacian_dir, file.replace(".jpg","_lap"))
-                    index +=1
+                    laplacians[index] = os.path.join(laplacian_dir, file.replace(".jpg", "_lap"))
+                    index += 1
         else:
             print(laplacian_dir)
             images[index] = video_frames_input_dir
             laplacians[index] = laplacian_dir
-            image_names[index] = video_frames_input_dir[video_frames_input_dir.rfind("/")+1:]
+            image_names[index] = video_frames_input_dir[video_frames_input_dir.rfind("/") + 1:]
 
         num_images = len(images)
 
@@ -123,14 +122,15 @@ class DeepLaplacian(object):
 
         for i in range(num_images):
             content_image = images[i]
+            print(content_image)
             laplacian = laplacians[i]
             image_name = image_names[i]
             img = spi.imread(content_image, mode="RGB")
             resized_img = self.reshape_img(img)
             content_h, content_w, _ = resized_img.shape
 
-            #tmp_content_name = image_name.replace(".jpg", "_200.jpg")
-            tmp_content_name = os.path.join(tmp_content_path,image_name)
+            # tmp_content_name = image_name.replace(".jpg", "_200.jpg")
+            tmp_content_name = os.path.join(tmp_content_path, image_name)
             spm.imsave(tmp_content_name, resized_img)
 
             print("Calculating matting laplacian for " + str(content_image) + " as " + laplacian + "...")
@@ -138,7 +138,7 @@ class DeepLaplacian(object):
             h, w, c = img.shape
             csr = self.getlaplacian1(img, np.zeros(shape=(200, 200)), 1e-7, 1)
             coo = csr.tocoo()
-            self.save_sparse_csr(laplacian,csr)
+            self.save_sparse_csr(laplacian, csr)
 
     def __init__(self):
         parser = argparse.ArgumentParser()
@@ -151,10 +151,11 @@ class DeepLaplacian(object):
         parser.add_argument('--video', action='store_true',
                             help='Boolean flag indicating if the user is generating laplacian for a video.')
         args = parser.parse_args()
-        video_frames_input_dir  = args.video_frames_input_dir
+        video_frames_input_dir = args.video_frames_input_dir
         laplacian_dir = args.laplacian_dir
         is_video = args.video
         print(is_video)
-        self.run(video_frames_input_dir,laplacian_dir,is_video)
+        self.run(video_frames_input_dir, laplacian_dir, is_video)
+
 
 DeepLaplacian()

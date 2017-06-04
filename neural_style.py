@@ -7,6 +7,7 @@ import errno
 import time
 import cv2
 import os
+import scipy.misc
 
 '''
   parsing and configuration
@@ -58,7 +59,7 @@ def parse_args():
                         help='Weight for the content loss function. (default: %(default)s)')
 
     parser.add_argument('--style_weight', type=float,
-                        default=1e4,
+                        default=1e2,
                         help='Weight for the style loss function. (default: %(default)s)')
 
     parser.add_argument('--tv_weight', type=float,
@@ -66,7 +67,7 @@ def parse_args():
                         help='Weight for the total variational loss function. Set small (e.g. 1e-3). (default: %(default)s)')
 
     parser.add_argument('--temporal_weight', type=float,
-                        default=2e2,
+                        default=1e3,
                         help='Weight for the temporal loss function. (default: %(default)s)')
 
     parser.add_argument('--content_loss_function', type=int,
@@ -209,7 +210,7 @@ def parse_args():
                         help='Maximum number of optimizer iterations of the first frame. (default: %(default)s)')
 
     parser.add_argument('--frame_iterations', type=int,
-                        default=800,
+                        default=1000,
                         help='Maximum number of optimizer iterations for each frame after the first frame. (default: %(default)s)')
 
     # Adding the laplacian dir argument
@@ -494,12 +495,7 @@ def sum_shortterm_temporal_losses(sess, net, frame, input_img):
     x = sess.run(net['input'].assign(input_img))
     prev_frame = frame - 1
     w = get_prev_warped_frame(frame)
-    print("W Shape")
-    print(w.shape)
-    w = np.resize(w, (1, 110, 200, 3))
-    print(w.shape)
     c = get_content_weights(frame, prev_frame)
-    print(c.shape)
     loss = temporal_loss(x, w, c)
     return loss
 
@@ -652,14 +648,11 @@ def stylize(content_img, style_imgs, init_img, frame=None, laplacian_mat=None):
         # photorealism regularization term
         # laplacian_mat = "./image_input/test_lap.npz"
         CSR = load_sparse_csr(laplacian_mat)
-        print("Shape of init image - " + str(init_img.shape))
-        print("shape of csr " + str(CSR.shape))
         CSR_tensor = convert_sparse_matrix_to_sparse_tensor(CSR)
         channels = init_img.shape[3]
 
-        init_img_resized = tf.image.resize_images(init_img, size=[110, 200])
-        N = 110 * 200
-        V_O = tf.reshape(init_img_resized, shape=(N, channels))
+        N = init_img.shape[1] * init_img.shape[2]
+        V_O = tf.reshape(init_img, shape=(N, channels))
         print("V O shape " + str(V_O[:, 0].shape))
         L_photorealism_reg = 0
         for c in range(channels):
@@ -690,16 +683,16 @@ def stylize(content_img, style_imgs, init_img, frame=None, laplacian_mat=None):
         if args.video and frame > 1:
             gamma = args.temporal_weight
             print("Temporal Loss Frame")
-            L_temporal = sum_shortterm_temporal_losses(sess, net, frame, init_img_resized)
+            L_temporal = sum_shortterm_temporal_losses(sess, net, frame, init_img)
             L_total += gamma * L_temporal
 
         # optimization algorithm
         optimizer = get_optimizer(L_total)
 
         if args.optimizer == 'adam':
-            minimize_with_adam(sess, net, optimizer, init_img_resized, L_total)
+            minimize_with_adam(sess, net, optimizer, init_img, L_total)
         elif args.optimizer == 'lbfgs':
-            minimize_with_lbfgs(sess, net, optimizer, init_img_resized)
+            minimize_with_lbfgs(sess, net, optimizer, init_img)
 
         output_img = sess.run(net['input'])
         print(output_img.shape)
@@ -710,7 +703,7 @@ def stylize(content_img, style_imgs, init_img, frame=None, laplacian_mat=None):
         if args.video:
             write_video_output(frame, output_img)
         else:
-            write_image_output(output_img, content_img, style_imgs, init_img_resized)
+            write_image_output(output_img, content_img, style_imgs, init_img)
 
 
 def minimize_with_lbfgs(sess, net, optimizer, init_img):
@@ -904,6 +897,9 @@ def get_content_weights(frame, prev_frame):
     backward_fn = args.content_weights_frmt.format(str(frame), str(prev_frame))
     forward_path = os.path.join(args.video_input_dir, forward_fn)
     backward_path = os.path.join(args.video_input_dir, backward_fn)
+    print("Weights Files")
+    print(forward_path)
+    print(backward_path)
     forward_weights = read_weights_file(forward_path)
     backward_weights = read_weights_file(backward_path)
     return forward_weights  # , backward_weights
