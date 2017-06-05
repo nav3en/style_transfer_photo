@@ -54,8 +54,8 @@ temp_dir="./video_input/${content_filename}"
 mkdir -p "$temp_dir"
 
 # Save frames of the video as individual image files
-#$FFMPEG -v quiet -i "$1" "${temp_dir}/frame_%04d.png"
-#eval $(ffprobe -v error -of flat=s=_ -select_streams v:0 -show_entries stream=width,height "$1")
+$FFMPEG -v quiet -i "$1" "${temp_dir}/frame_%04d.png"
+eval $(ffprobe -v error -of flat=s=_ -select_streams v:0 -show_entries stream=width,height "$1")
 #width="${streams_stream_0_width}"
 #height="${streams_stream_0_height}"
 #width=200
@@ -67,7 +67,7 @@ mkdir -p "$temp_dir"
 #fi
 #num_frames=$(find "${temp_dir}" -iname "*.jpg" | wc -l)
 
-#python3 Deep_Laplacian.py --video_frames_input_dir ./video_input/tenor_snow --laplacian_dir './video_input/laplacian' --video
+#python3 Deep_Laplacian.py --video_frames_input_dir ./video_input/surf1 --laplacian_dir './video_input/laplacian' --video
 
 echo "Computing optical flow [CPU]. This will take a while..."
 cd ./video_input
@@ -76,24 +76,24 @@ cd ..
 
 
 #echo "Rendering stylized video frames [CPU & GPU]. This will take a while..."
-python neural_style.py --video \
+#python neural_style.py --video \
 --video_input_dir "${temp_dir}" \
 --style_imgs_dir "${style_dir}" \
 --style_imgs "${style_filename}" \
---end_frame "24" \
+--end_frame "19" \
 --max_size "200" \
 --laplacian_dir './video_input/laplacian' \
 --content_frame_frmt 'frame_{}.jpg' \
 --lambda_val 10000 \
---content_weight 5 \
+--content_weight 50 \
 --style_weight 50 \
---temporal_weight 20 \
--- learning_rate 1000 \
+--temporal_weight 300 \
+--prev_frame_indices 2 \
 --verbose;
 
 # Create video from output images.
 echo "Converting image sequence to video.  This should be quick..."
-$FFMPEG -v quiet -i ./video_output/frame_%04d.jpg ./video_output/${content_filename}-stylized.$extension
+$FFMPEG -v quiet -i ./video_output/frame_%04d.jpg ./video_output/surf15.$extension
 
 # Clean up garbage
 #if [ -d "${temp_dir}" ]; then
